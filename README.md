@@ -1,1 +1,2 @@
-# Hanken-Q4Finance
+# Hanken Hackathon
+## Quantum computing for finance
