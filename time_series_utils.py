@@ -57,3 +57,24 @@ def apply_sax(time_series):
     print("Binary SAX Representation:", binary_sax_symbols)
     
     return binary_sax_symbols
+
+
+# The following code takes a list such as
+# [1,1,2,6,8,5,5,7,8,8,1,1,4,5,5,0,0,0,1,1,4,4,5,1,3,3,4,5,4,1,1]
+# with states labeled as successive integers starting with 0
+# and returns a transition matrix M,
+# where M[i][j] is the probability of transitioning from i to j
+# For m-dimensional time series X = (s_1, ..., s_l, ..., s_m)
+# we use this function for each s_l
+# This classical data is used in the training of the model
+def classical_transition_matrix(transitions):
+    n = 1 + max(transitions) #number of states
+    M = [[0]*n for _ in range(n)]
+    for (i,j) in zip(transitions,transitions[1:]):
+        M[i][j] += 1
+    # Convert to probabilities:
+    for row in M:
+        s = sum(row)
+        if s > 0:
+            row[:] = [f/s for f in row]
+    return M
