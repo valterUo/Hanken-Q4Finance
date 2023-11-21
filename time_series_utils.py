@@ -19,6 +19,25 @@ def generate_normal_time_series_set(p: int,
     T = torch.linspace(t_init, t_end, p)
     return X, T
 
+def generate_synthetic_correlated_time_series():
+    mu = np.array([-1, -2])
+    sigma = np.array([[1, -0.5], [-0.5, 1]])
+    T = 1.0
+    N = 100
+    dt = T / N
+    M = len(mu)
+    X0 = np.array([0, 0])
+    dW = np.random.normal(0, np.sqrt(dt), (M, N))
+
+    # Euler-Maruyama method
+    X = np.zeros((M, N+1))
+    X[:, 0] = X0
+
+    for i in range(N):
+        X[:, i+1] = X[:, i] + mu * dt + sigma @ dW[:, i]
+    
+    return X
+
 
 def plot_series(T_norm, X_norm, T_anom = None, Y_anom = None):
     plt.figure()
@@ -30,33 +49,28 @@ def plot_series(T_norm, X_norm, T_anom = None, Y_anom = None):
     plt.grid()
     leg = plt.legend()
     
+def convert_to_binary(time_series, width):
+    if type(time_series[0]) == np.ndarray:
+        result = []
+        for ts in time_series:
+            result.append(convert_to_binary(ts, width))
+    else:
+        result = np.array([np.binary_repr(x, width=width) for x in time_series])
+    return result
 
-def convert_to_binary(symbols, bits):
-    binary_representation = [''.join(format(symbol, f'0{bits}b') for symbol in row) for row in symbols]
-    return np.array(binary_representation)
 
-
-def apply_sax(time_series):
+def apply_sax(time_series, n_sax_symbols = 4):
     # Normalize the time series
     scaler = TimeSeriesScalerMeanVariance()
     time_series_scaled = scaler.fit_transform(time_series)
 
-    # Apply SAX with a larger alphabet size
-    n_paa_segments = 4  # Number of segments
-    n_sax_symbols = 4  # Alphabet size (4 symbols: 0, 1, 2, 3)
+    n_paa_segments = n_sax_symbols  # Number of segments
+    n_sax_symbols = n_sax_symbols  # Alphabet size, e.g., 4 symbols: 0, 1, 2, 3
     sax = SymbolicAggregateApproximation(n_segments=n_paa_segments, alphabet_size_avg=n_sax_symbols)
     time_series_sax = sax.fit_transform(time_series_scaled)
-
-    # Convert SAX symbols to binary representation
-    sax_symbols = sax.inverse_transform(time_series_sax)
-    binary_sax_symbols = convert_to_binary(sax_symbols, bits=2)
-
-    print("Original Time Series:", time_series)
-    print("Normalized Time Series:", time_series_scaled)
-    print("SAX Representation:", sax_symbols)
-    print("Binary SAX Representation:", binary_sax_symbols)
-    
-    return binary_sax_symbols
+    binary_time_series = convert_to_binary(time_series_sax, n_sax_symbols)
+    print("Sax time series:", time_series_sax)
+    return binary_time_series
 
 
 # The following code takes a list such as
