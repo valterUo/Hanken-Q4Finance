@@ -24,7 +24,7 @@ def generate_synthetic_correlated_time_series(T, N):
     sigma = np.array([[1, -0.5], [-0.5, 1]])
     dt = T / N
     M = len(mu)
-    X0 = np.array([1, 1])
+    X0 = np.array([0, 0])
     dW = np.random.normal(0, np.sqrt(dt), (M, N))
 
     # Euler-Maruyama method
@@ -57,18 +57,27 @@ def convert_to_binary(time_series, width):
     return result
 
 
-def apply_sax(time_series, n_sax_symbols = 4):
+def apply_sax(time_series, n_segments, n_sax_symbols = 4):
     # Normalize the time series
     scaler = TimeSeriesScalerMeanVariance()
     time_series_scaled = scaler.fit_transform(time_series)
 
-    n_paa_segments = n_sax_symbols  # Number of segments, it is not clear how to choose this parameter?
+    n_paa_segments = n_segments  # Number of segments, it is not clear how to choose this parameter?
     n_sax_symbols = n_sax_symbols  # Alphabet size, e.g., 4 symbols: 0, 1, 2, 3
     sax = SymbolicAggregateApproximation(n_segments=n_paa_segments, alphabet_size_avg=n_sax_symbols)
     time_series_sax = sax.fit_transform(time_series_scaled)
     binary_time_series = convert_to_binary(time_series_sax, n_sax_symbols)
     #print("Sax time series:", time_series_sax)
     return binary_time_series, time_series_sax
+
+
+def apply_sax_inverse(time_series_sax, n_sax_symbols = 4):
+    n_paa_segments = n_sax_symbols  # Number of segments, it is not clear how to choose this parameter?
+    n_sax_symbols = n_sax_symbols  # Alphabet size, e.g., 4 symbols: 0, 1, 2, 3
+    sax = SymbolicAggregateApproximation(n_segments=n_paa_segments, alphabet_size_avg=n_sax_symbols)
+    time_series_sax = sax.fit_transform(time_series_sax)
+    time_series_inverse = sax.inverse_transform(time_series_sax)
+    return time_series_inverse
 
 
 # The following code takes a list such as
