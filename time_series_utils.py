@@ -19,14 +19,12 @@ def generate_normal_time_series_set(p: int,
     T = torch.linspace(t_init, t_end, p)
     return X, T
 
-def generate_synthetic_correlated_time_series():
-    mu = np.array([-1, -2])
+def generate_synthetic_correlated_time_series(T, N):
+    mu = np.array([-0.1, -0.2])
     sigma = np.array([[1, -0.5], [-0.5, 1]])
-    T = 1.0
-    N = 100
     dt = T / N
     M = len(mu)
-    X0 = np.array([0, 0])
+    X0 = np.array([1, 1])
     dW = np.random.normal(0, np.sqrt(dt), (M, N))
 
     # Euler-Maruyama method
@@ -64,13 +62,13 @@ def apply_sax(time_series, n_sax_symbols = 4):
     scaler = TimeSeriesScalerMeanVariance()
     time_series_scaled = scaler.fit_transform(time_series)
 
-    n_paa_segments = n_sax_symbols  # Number of segments
+    n_paa_segments = n_sax_symbols  # Number of segments, it is not clear how to choose this parameter?
     n_sax_symbols = n_sax_symbols  # Alphabet size, e.g., 4 symbols: 0, 1, 2, 3
     sax = SymbolicAggregateApproximation(n_segments=n_paa_segments, alphabet_size_avg=n_sax_symbols)
     time_series_sax = sax.fit_transform(time_series_scaled)
     binary_time_series = convert_to_binary(time_series_sax, n_sax_symbols)
-    print("Sax time series:", time_series_sax)
-    return binary_time_series
+    #print("Sax time series:", time_series_sax)
+    return binary_time_series, time_series_sax
 
 
 # The following code takes a list such as
@@ -83,7 +81,8 @@ def apply_sax(time_series, n_sax_symbols = 4):
 # This classical data is used in the training of the model
 def classical_transition_matrix(transitions):
     n = 1 + max(transitions) #number of states
-    M = [[0]*n for _ in range(n)]
+    # Initialize n x n dictionary of 0s
+    M = [[0] * n for _ in range(n)]
     for (i,j) in zip(transitions,transitions[1:]):
         M[i][j] += 1
     # Convert to probabilities:
@@ -92,3 +91,14 @@ def classical_transition_matrix(transitions):
         if s > 0:
             row[:] = [f/s for f in row]
     return M
+
+def flatten_recursive(lst):
+    for item in lst:
+        if isinstance(item, list):
+            yield from flatten_recursive(item)
+        elif isinstance(item, np.ndarray):
+            yield from flatten_recursive(item)
+        elif isinstance(item, torch.Tensor):
+            yield from flatten_recursive(item)
+        else:
+            yield item
