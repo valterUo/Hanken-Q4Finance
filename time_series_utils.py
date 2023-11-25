@@ -19,6 +19,34 @@ def generate_normal_time_series_set(p: int,
     T = torch.linspace(t_init, t_end, p)
     return X, T
 
+
+def generate_anomalous_time_series_set(
+    p: int,
+    num_series: int,
+    noise_amp: float,
+    spike_amp: float,
+    max_duration: int,
+    t_init: float,
+    t_end: float,
+    seed: int = GLOBAL_SEED,
+) -> tuple:
+    """Generate an anomalous time series data set where the p elements of each sequence are
+    from a normal distribution x_t ~ N(0, noise_amp). Then,
+    anomalous spikes of random amplitudes and durations are inserted.
+    """
+    torch.manual_seed(seed)
+    Y = torch.normal(0, noise_amp, (num_series, p))
+    for y in Y:
+        # 5–10 spikes allowed
+        spike_num = torch.randint(low=5, high=10, size=())
+        durations = torch.randint(low=1, high=max_duration, size=(spike_num,))
+        spike_start_idxs = torch.randperm(p - max_duration)[:spike_num]
+        for start_idx, duration in zip(spike_start_idxs, durations):
+            y[start_idx : start_idx + duration] += torch.normal(0.0, spike_amp, (duration,))
+    T = torch.linspace(t_init, t_end, p)
+    return Y, T
+
+
 def generate_synthetic_correlated_time_series(T, N):
     mu = np.array([-0.1, -0.2])
     sigma = np.array([[1, -0.5], [-0.5, 1]])
