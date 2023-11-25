@@ -95,7 +95,7 @@ def apply_sax(time_series, n_segments, n_sax_symbols = 4):
     sax = SymbolicAggregateApproximation(n_segments=n_paa_segments, alphabet_size_avg=n_sax_symbols)
     time_series_sax = sax.fit_transform(time_series_scaled)
     binary_time_series = convert_to_binary(time_series_sax, n_sax_symbols)
-    #print("Sax time series:", time_series_sax)
+    print("Sax time series:", time_series_sax)
     return binary_time_series, time_series_sax
 
 
